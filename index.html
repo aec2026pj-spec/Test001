@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SCIn 2026 Test Page</title>
+  <title>SCIn 2026 - Final Test</title>
   <style>
     body { font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; padding: 20px; background: #f0f4f8; color: #333; }
     .card { background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 350px; margin: auto; }
     h3 { color: #1A73E8; margin-bottom: 20px; }
-    input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; text-align: center; }
+    input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; text-align: center; }
+    input[type="file"] { margin-bottom: 15px; font-size: 14px; }
     button { padding: 15px; width: 100%; background: #1A73E8; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 17px; font-weight: bold; transition: 0.3s; }
-    button:active { background: #1557b0; transform: scale(0.98); }
-    #status { margin-top: 25px; padding: 10px; border-radius: 8px; font-size: 14px; min-height: 20px; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #preview { width: 100%; border-radius: 12px; display: none; margin-bottom: 15px; border: 2px solid #e0e0e0; }
+    #status { margin-top: 20px; padding: 10px; border-radius: 8px; font-size: 14px; min-height: 20px; }
     .loading { color: #f39c12; font-weight: bold; }
     .success { color: #27ae60; font-weight: bold; background: #e8f5e9; }
     .error { color: #c0392b; font-weight: bold; background: #fdecea; }
@@ -20,74 +22,90 @@
 <body>
 
   <div class="card">
-    <h3>🚀 SCIn 2026 Test</h3>
-    <p style="font-size: 14px; color: #666;">ทดสอบส่งข้อมูลจาก GitHub ไปยัง Google Sheet ใหม่</p>
+    <h3>📸 SCIn 2026 Check-in</h3>
+    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">ทดสอบระบบบันทึกพิกัดและรูปถ่าย</p>
     
-    <input type="text" id="testName" placeholder="ระบุชื่อเล่นเพื่อทดสอบ">
+    <input type="text" id="testName" placeholder="พิมพ์ชื่อเล่นของคุณ">
     
-    <button onclick="testGPS()">ส่งพิกัดและข้อมูล</button>
+    <div style="text-align: left; font-size: 13px; color: #1A73E8; margin-bottom: 5px; font-weight: bold;">📷 ถ่ายรูปหรือเลือกรูปภาพ:</div>
+    <input type="file" id="photoInput" accept="image/*" capture="camera" onchange="previewImage(this)">
     
-    <div id="status">รอการกดส่งข้อมูล...</div>
+    <img id="preview" alt="ตัวอย่างรูปถ่าย">
+
+    <button id="sendBtn" onclick="sendAllData()">ยืนยันพิกัดและส่งข้อมูล</button>
+    
+    <div id="status">รอทำรายการ...</div>
   </div>
 
   <script>
-    // URL ของ Web App ที่คุณระบุมา
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwGGh9w5IGqNBWKunzS1ePRue5AsedbIm1BdVTyvc11wK20gK9sZIMWtv8XbuPcQvpgaA/exec";
+    // URL Web App ล่าสุดที่คุณกำหนด
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNikSJyCkPzAa9UNEf38SGmhQEDzZdlEXRgDPiH217Seulvm0-jOFB06Kz01oBGWM2/exec";
+    let base64Image = "";
 
-    function testGPS() {
+    // ฟังก์ชันแสดงตัวอย่างรูปภาพ
+    function previewImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('preview');
+          preview.src = e.target.result;
+          preview.style.display = "block";
+          base64Image = e.target.result; // เก็บข้อมูลรูปในรูปแบบ Base64
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function sendAllData() {
       const name = document.getElementById('testName').value;
       const statusDiv = document.getElementById('status');
+      const sendBtn = document.getElementById('sendBtn');
 
-      if(!name) {
-        alert("กรุณาใส่ชื่อก่อนทดสอบครับ");
-        return;
-      }
+      if(!name) { alert("กรุณาใส่ชื่อเล่นครับ"); return; }
+      if(!base64Image) { alert("กรุณาถ่ายรูปก่อนส่งครับ"); return; }
 
       statusDiv.innerText = "⏳ กำลังดึงพิกัด GPS...";
       statusDiv.className = "loading";
-      
-      // ขอพิกัด GPS
+      sendBtn.disabled = true;
+
       navigator.geolocation.getCurrentPosition(function(pos) {
         
-        // เตรียมข้อมูลที่จะส่ง (สอดคล้องกับตัวรับ doPost ใน Apps Script)
+        statusDiv.innerText = "🔄 พิกัดพร้อมแล้ว! กำลังส่งข้อมูลและรูปภาพ...";
+
         const payload = {
-          action: "test_from_github",
           values: [
             name, 
             pos.coords.latitude, 
             pos.coords.longitude, 
-            "ส่งจาก GitHub Pages",
+            "GitHub Pages (Final Test)",
             new Date().toLocaleTimeString()
-          ]
+          ],
+          image: base64Image
         };
 
-        statusDiv.innerText = "🔄 พิกัดพร้อม! กำลังส่งข้อมูลไปยัง Google Sheet...";
-
-        // ส่งข้อมูลไปยัง Google Apps Script
         fetch(WEB_APP_URL, {
           method: "POST",
-          mode: "no-cors", // สำคัญมากสำหรับการส่งข้ามโดเมน
-          headers: {
-            "Content-Type": "text/plain"
-          },
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify(payload)
         })
         .then(() => {
-          // เนื่องจากใช้ no-cors เราอาจจะไม่ได้รับ Response กลับมาตรงๆ 
-          // แต่ถ้าไม่มี Error พ่นออกมาใน Console มักจะบันทึกสำเร็จ
-          statusDiv.innerText = "✅ บันทึกสำเร็จ! กรุณาตรวจสอบที่ Google Sheet";
+          statusDiv.innerText = "✅ บันทึกสำเร็จ! รูปภาพถูกส่งเข้า Drive แล้ว";
           statusDiv.className = "success";
-          document.getElementById('testName').value = ""; // ล้างช่องชื่อ
+          alert("บันทึกข้อมูลและรูปภาพเรียบร้อยแล้ว!");
+          location.reload(); // รีโหลดหน้าเว็บเพื่อเริ่มใหม่
         })
         .catch(err => {
-          statusDiv.innerText = "❌ เกิดข้อผิดพลาด: " + err;
+          statusDiv.innerText = "❌ เกิดข้อผิดพลาดในการส่ง";
           statusDiv.className = "error";
-          console.error(err);
+          sendBtn.disabled = false;
         });
 
       }, (err) => {
-        statusDiv.innerText = "❌ GPS Error: " + err.message + "\n(กรุณากด 'อนุญาต' สิทธิ์พิกัด)";
+        statusDiv.innerText = "❌ GPS Error: " + err.message;
         statusDiv.className = "error";
+        sendBtn.disabled = false;
+        alert("กรุณาอนุญาตสิทธิ์การเข้าถึงพิกัด (GPS) เพื่อทำงานต่อ");
       }, { enableHighAccuracy: true });
     }
   </script>
