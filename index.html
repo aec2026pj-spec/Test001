@@ -5,75 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CODE of 2026 SCIn</title>
   <style>
-    :root {
-      --primary-color: #a8dadc;
-      --secondary-color: #f1faee;
-      --accent-color: #457b9d;
-      --text-color: #1d3557;
-    }
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background-color: var(--secondary-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    h2 { color: var(--accent-color); margin-bottom: 20px; }
-    .btn {
-      width: 100%;
-      padding: 15px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .btn-site { background-color: #ffb703; color: white; }
-    .btn-start { background-color: #2a9d8f; color: white; }
-    .btn-end { background-color: #e76f51; color: white; }
-    #preview {
-      width: 100%;
-      border-radius: 15px;
-      margin-top: 15px;
-      display: none;
-    }
-    #status {
-      margin-top: 15px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    /* สไตล์เพิ่มเติมคงตามต้นฉบับ M1-5 */
+    :root { --primary: #a8dadc; --secondary: #f1faee; --accent: #457b9d; --dark: #1d3557; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--secondary); color: var(--dark); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
+    h2, h3 { color: var(--accent); margin-bottom: 15px; }
+    input, select { width: 90%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; }
+    .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+    .btn-site { background: #ffb703; }
+    .btn-start { background: #2a9d8f; }
+    .btn-end { background: #e76f51; }
+    .btn-exp { background: #6a4c93; }
+    #preview { width: 100%; border-radius: 15px; margin-top: 15px; display: none; border: 1px solid #ddd; }
+    .divider { height: 2px; background: #eee; margin: 20px 0; }
+    #status { margin-top: 15px; font-weight: bold; font-size: 14px; }
   </style>
 </head>
 <body>
 
   <div class="card">
     <h2>CODE of 2026 SCIn</h2>
-    <input type="text" id="userName" placeholder="ระบุชื่อผู้ใช้งาน" style="width:90%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px;">
+    <input type="text" id="userName" placeholder="👤 ระบุชื่อผู้ใช้งาน">
     
-    <input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none;" onchange="handleImage(this)">
-    
-    <button class="btn btn-site" onclick="triggerCamera('SITE')">📍 Site Check In</button>
-    <button class="btn btn-start" onclick="triggerCamera('START')">💪 เริ่มงาน</button>
-    <button class="btn btn-end" onclick="triggerCamera('END')">😴 เลิกงาน</button>
+    <button class="btn btn-site" onclick="triggerAction('SITE')">📍 Site Check In</button>
+    <button class="btn btn-start" onclick="triggerAction('START')">💪 เริ่มงาน</button>
+    <button class="btn btn-end" onclick="triggerAction('END')">😴 เลิกงาน</button>
 
+    <div class="divider"></div>
+
+    <h3>💰 บันทึกค่าใช้จ่าย</h3>
+    <select id="expType">
+      <option value="ค่าเดินทาง">🚗 ค่าเดินทาง</option>
+      <option value="ค่าอาหาร">🍴 ค่าอาหาร</option>
+      <option value="วัสดุอุปกรณ์">🛠️ วัสดุอุปกรณ์</option>
+      <option value="อื่นๆ">📦 อื่นๆ</option>
+    </select>
+    <input type="number" id="expAmount" placeholder="ระบุจำนวนเงิน (บาท)">
+    <button class="btn btn-exp" onclick="triggerAction('EXPENSE')">📸 ถ่ายใบเสร็จ & บันทึก</button>
+
+    <input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none;" onchange="handleImage(this)">
     <img id="preview">
-    <div id="status">ยินดีต้อนรับ</div>
+    <div id="status">พร้อมใช้งาน</div>
   </div>
 
   <script>
@@ -81,7 +52,10 @@
     let currentAction = "";
     let base64Image = "";
 
-    function triggerCamera(action) {
+    function triggerAction(action) {
+      const name = document.getElementById('userName').value;
+      if (!name) return alert("กรุณาระบุชื่อก่อนครับ");
+      
       currentAction = action;
       document.getElementById('cameraInput').click();
     }
@@ -93,61 +67,57 @@
           base64Image = e.target.result;
           document.getElementById('preview').src = base64Image;
           document.getElementById('preview').style.display = "block";
-          processSubmission();
+          submitData();
         };
         reader.readAsDataURL(input.files[0]);
       }
     }
 
-    function processSubmission() {
-      const name = document.getElementById('userName').value;
+    function submitData() {
       const statusDiv = document.getElementById('status');
+      const name = document.getElementById('userName').value;
+      const expType = document.getElementById('expType').value;
+      const expAmount = document.getElementById('expAmount').value;
 
-      if (!name) {
-        alert("กรุณาระบุชื่อก่อนครับ");
-        return;
-      }
-
-      statusDiv.innerText = "⏳ กำลังดึงพิกัดและบันทึกข้อมูล...";
+      statusDiv.innerText = "⏳ กำลังบันทึกข้อมูล...";
       statusDiv.style.color = "#f39c12";
 
       navigator.geolocation.getCurrentPosition(function(pos) {
-        const payload = {
-          values: [
-            new Date().toLocaleString('th-TH'),
-            name,
-            currentAction,
-            pos.coords.latitude,
-            pos.coords.longitude,
-            "GitHub Pages"
-          ],
-          image: base64Image
-        };
+        let values = [
+          new Date().toLocaleString('th-TH'),
+          name,
+          currentAction,
+          pos.coords.latitude,
+          pos.coords.longitude,
+          "GitHub Pages"
+        ];
 
-        // ส่งข้อมูลไปยัง Apps Script ด้วย fetch
+        // หากเป็นการเบิกเงิน ให้เพิ่มข้อมูลเงินเข้าไปในอาเรย์ (ปรับตามโครงสร้าง Column ของคุณ)
+        if(currentAction === "EXPENSE") {
+          values.push(expType, expAmount);
+        }
+
         fetch(WEB_APP_URL, {
           method: "POST",
           mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
-        })
-        .then(() => {
-          statusDiv.innerText = "✅ บันทึกสำเร็จ: " + currentAction;
+          body: JSON.stringify({
+            action: currentAction,
+            values: values,
+            image: base64Image
+          })
+        }).then(() => {
+          statusDiv.innerText = "✅ บันทึกสำเร็จ!";
           statusDiv.style.color = "#27ae60";
-          alert("บันทึกข้อมูล " + currentAction + " เรียบร้อยแล้ว");
-          // รีเซ็ตหน้าจอ
+          alert("บันทึก " + currentAction + " เรียบร้อย");
+          // Reset
           document.getElementById('preview').style.display = "none";
+          document.getElementById('expAmount').value = "";
           base64Image = "";
-        })
-        .catch(err => {
-          statusDiv.innerText = "❌ เกิดข้อผิดพลาด: " + err;
-          statusDiv.style.color = "#c0392b";
+        }).catch(err => {
+          statusDiv.innerText = "❌ ผิดพลาด: " + err;
         });
 
-      }, (err) => {
-        alert("กรุณาเปิด GPS และอนุญาตสิทธิ์พิกัด");
-        statusDiv.innerText = "❌ GPS Error";
-      }, { enableHighAccuracy: true });
+      }, (err) => alert("กรุณาเปิด GPS"), { enableHighAccuracy: true });
     }
   </script>
 </body>
