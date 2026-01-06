@@ -1,142 +1,474 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SCIn 2026">
+
+  <link rel="apple-touch-icon" href="https://img.icons8.com/fluent/512/map-marker.png">
+  <link rel="icon" href="https://img.icons8.com/fluent/512/map-marker.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CODE of 2026 SCIn</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* ใช้สไตล์สี Pastel และ Font เดิมของ M1-5 */
-    body { font-family: 'Sarabun', sans-serif; background: #f1faee; color: #1d3557; margin: 0; padding: 15px; }
-    .container { max-width: 400px; margin: auto; }
-    .page { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
-    .active { display: block; } /* หน้าที่กำลังแสดง */
+    :root {
+      --bg-color: #F7F9F9;
+      --card-bg: #FFFFFF;
+      --pastel-blue: #D4EBF8;
+      --pastel-green: #E1F0DA;
+      --pastel-yellow: #FFF9C4;
+      --pastel-red: #FFCCBC;
+      --pastel-orange: #FFE0B2;
+      --accent-blue: #1A73E8;
+    }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 10px; background-color: var(--bg-color); color: #546E7A; text-align: center; margin: 0; }
+    .card { background: white; padding: 30px 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 400px; margin: 20px auto; box-sizing: border-box; }
     
-    h2 { color: #457b9d; margin-top: 0; }
-    .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }
-    .btn-next { background: #a8dadc; color: #1d3557; }
-    .btn-back { background: #ccc; color: #666; }
-    .btn-main { background: #1A73E8; }
+    .pos-btn { display: block; width: 100%; padding: 18px; margin: 12px 0; font-size: 19px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; color: #546E7A; transition: 0.3s; text-decoration: none; }
+    .btn-site { background-color: var(--pastel-blue); }
+    .btn-in { background-color: var(--pastel-green); }
+    .btn-out { background-color: var(--pastel-yellow); }
+    .btn-report { background-color: var(--pastel-red); color: #BF360C; }
+    .btn-expense { background-color: var(--pastel-orange); color: #E65100; }
     
-    input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
-    #preview { width: 100%; border-radius: 15px; margin-top: 15px; display: none; }
+    .status-display { font-size: 26px; font-weight: 900; color: var(--accent-blue); background: #E3F2FD; padding: 15px; border-radius: 15px; margin-bottom: 20px; width: 100%; box-sizing: border-box; border: 2px dashed var(--pastel-blue); }
+    
+    input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ECEFF1; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; background: #FAFAFA; font-family: inherit; text-align: center; }
+    input:focus, textarea:focus { border-color: var(--accent-blue); background: #FFF; }
+    
+    .main-btn { padding: 18px; font-size: 18px; width: 100%; cursor: pointer; background-color: #A5D6A7; color: white; border: none; border-radius: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(165,214,167,0.4); margin-top: 10px; }
+    .main-btn:disabled { background-color: #CFD8DC; box-shadow: none; cursor: not-allowed; }
+    
+    .section-title { font-weight: bold; color: var(--accent-blue); margin-bottom: 15px; text-align: left; }
+    .summary-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; line-height: 1.6; }
+    
+    #page-record, #extra-questions, #report-section, #site-section, #expense-section, #expense-upload, #expense-summary, #finish-msg { display: none; }
+    .welcome-msg { font-size: 14px; color: #90A4AE; margin-top: 25px; line-height: 1.6; }
+    .safety-msg { font-size: 18px; font-weight: bold; color: #EF5350; margin-top: 10px; }
+    .icon-success { font-size: 60px; color: #4CAF50; margin-bottom: 15px; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div id="page1" class="page active">
-    <h2>CODE of 2026 SCIn</h2>
-    <p>กรุณาระบุชื่อผู้ใช้งาน</p>
-    <input type="text" id="userName" placeholder="ชื่อ-นามสกุล">
-    <button class="btn btn-next" onclick="showPage(2)">ถัดไป ➔</button>
+  <div id="page-welcome" class="card">
+    <h2 style="color:#78909C;">2026 AEC Check IN</h2>
+    <p>กรุณาเลือกสถานะของคุณเพื่อเข้าสู่ระบบ</p>
+    <button type="button" class="pos-btn btn-site" onclick="selectStatus('Site Check In')">📍 Site Check In</button>
+    <button type="button" class="pos-btn btn-in" onclick="selectStatus('Check In')">💪 เริ่มงาน (Check In)</button>
+    <button type="button" class="pos-btn btn-out" onclick="selectStatus('Check Out')">😴 เลิกงาน (Check Out)</button>
+    <button type="button" class="pos-btn btn-report" onclick="selectStatus('Report')">📝 Report (ส่งรายงาน)</button>
+    <button type="button" class="pos-btn btn-expense" onclick="selectStatus('Expenses')">💰 Expenses (เบิกค่าใช้จ่าย)</button>
   </div>
 
-  <div id="page2" class="page">
-    <h2>เลือกรายการ</h2>
-    <button class="btn" style="background:#ffb703" onclick="selectTask('SITE')">📍 Site Check In</button>
-    <button class="btn" style="background:#2a9d8f" onclick="selectTask('START')">💪 เริ่มงาน</button>
-    <button class="btn" style="background:#e76f51" onclick="selectTask('END')">😴 เลิกงาน</button>
-    <button class="btn" style="background:#6a4c93" onclick="showPage(3)">💰 เบิกค่าใช้จ่าย</button>
-    <button class="btn btn-back" onclick="showPage(1)">ย้อนกลับ</button>
+  <div id="page-record" class="card">
+    <div id="display-status" class="status-display">สถานะ: </div>
+    <div id="status-text" style="margin-bottom:15px; font-weight:bold; color:orange;">⏳ พร้อมบันทึกข้อมูล</div>
+
+    <input type="text" id="userName" placeholder="พิมพ์ ชื่อเล่นของคุณ (ต้องเหมือนกันทุกครั้ง)">
+
+    <div id="extra-questions">
+      <input type="text" id="q_with" placeholder="ทำงานกับใคร (ระบุชื่อเล่น)">
+      <select id="q_car" onchange="checkCar()">
+        <option value="รถตัวเอง">ใช้รถตัวเอง</option>
+        <option value="ระบุชื่อเล่น">ใช้รถคนอื่น (ระบุชื่อเล่น)</option>
+      </select>
+      <input type="text" id="q_car_name" placeholder="ระบุชื่อเล่นเจ้าของรถ" style="display:none;">
+      <input type="number" id="q_mile" placeholder="เลขไมล์เท่าไร (ตัวเลขเท่านั้น)">
+      <select id="q_loc" onchange="checkHotel()">
+        <option id="opt_loc_head" value="">เช็คอินที่ไหน? (บังคับเลือก)</option>
+        <option value="ออฟฟิต">ออฟฟิต</option>
+        <option id="opt_dynamic" value="กำลังออกจากที่พัก">กำลังออกจากที่พัก</option>
+        <option id="opt_hotel" value="โรงแรม" style="display:none;">โรงแรม</option>
+      </select>
+      <input type="text" id="q_hotel_prov" placeholder="ระบุจังหวัดของโรงแรม" style="display:none;">
+      <textarea id="q_plan" rows="3" placeholder="PLAN: งานที่จะทำในวันนี้ (บังคับกรอก)"></textarea>
+    </div>
+
+    <div id="report-section">
+      <select id="q_region">
+        <option value="">-- เลือก Region (บังคับ) --</option>
+        <option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option><option>TE</option><option>DR</option>
+      </select>
+      <input type="text" id="q_buddy" placeholder="ทำงานคู่กับใคร (ถ้ามี)">
+      <div style="text-align:left; font-weight:bold; color:var(--accent-blue); margin-bottom:5px;">รายงานผลการทำงานวันที่?</div>
+      <input type="date" id="q_date_rep">
+      <select id="q_type" onchange="document.getElementById('q_type_etc').style.display = (this.value === 'งาน อื่น ๆ' ? 'block' : 'none')">
+        <option value="">-- ประเภทงาน (บังคับ) --</option>
+        <option value="งาน CR">งาน CR</option><option value="งาน OFFICE">งาน OFFICE</option><option value="งาน TE">งาน TE</option><option value="งาน DRONE">งาน DRONE</option><option value="งาน อื่น ๆ">งาน อื่น ๆ</option>
+      </select>
+      <input type="text" id="q_type_etc" placeholder="ระบุชนิดงาน (บังคับ)" style="display:none;">
+      <textarea id="q_job_detail" placeholder="ระบุรายละเอียดงาน"></textarea>
+    </div>
+
+    <div id="site-section">
+      <div id="site-container"></div>
+    </div>
+
+    <div id="expense-section">
+      <input type="date" id="ex_date">
+      <select id="ex_type" onchange="document.getElementById('ex_type_etc').style.display=(this.value==='งาน อื่น ๆ'?'block':'none')">
+        <option value="">-- ประเภทงาน (บังคับ) --</option>
+        <option>งาน CR</option><option>งาน OFFICE</option><option>งาน TE</option><option>งาน DRONE</option><option>งาน อื่น ๆ</option>
+      </select>
+      <input type="text" id="ex_type_etc" placeholder="ระบุชนิดงาน" style="display:none;">
+      <select id="ex_region">
+        <option value="">-- สังกัดภาค (บังคับ) --</option>
+        <option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option><option>TE</option><option>DR</option><option>OFFICE</option>
+      </select>
+      <input type="text" id="ex_site" placeholder="ชื่อไซต์ (ระวังพิมพ์ชื่อผิด)">
+      <input type="text" id="ex_prov" placeholder="จังหวัด">
+      <input type="number" id="ex_oil" placeholder="บิล 1 ค่าน้ำมันรถยนต์ (บาท)">
+      <input type="number" id="ex_hotel" placeholder="บิล 2 ค่าที่พัก (บาท)">
+      <input type="number" id="ex_ccr" placeholder="บิล 3 ค่าของประชาคม (บาท)">
+      <input type="number" id="ex_trav" placeholder="บิล 4 ค่าเดินทาง (บาท)">
+      
+      <select id="ex_spc_type" onchange="document.getElementById('ex_spc_val').style.display=(this.value!=='ไม่มี'?'block':'none')">
+        <option value="ไม่มี">-- ค่าใช้จ่ายพิเศษ (ถ้ามี) --</option>
+        <option>เบิกฉุกเฉิน/เงินทีม/เงินกู้</option><option>ค่าจ้างรายวัน</option><option>ค่าจ้างผู้รับเหมา</option><option>ทำฟัน (สวัสดิการ)</option><option>ค่ารักษาพยาบาล (สวัสดิการ)</option><option>ค่าสันทนาการ (อนุมัติแล้ว)</option><option>ของใช้สำนักงาน</option><option>ค่าภาษี/ปกส.บริษัท</option>
+      </select>
+      <input type="number" id="ex_spc_val" placeholder="ระบุจำนวนเงินพิเศษ (บาท)" style="display:none;">
+
+      <select id="ex_nb_type" onchange="document.getElementById('ex_nb_area').style.display=(this.value!=='ไม่มี'?'block':'none')">
+        <option value="ไม่มี">-- ค่าใช้จ่ายไม่มีบิล (ถ้ามี) --</option>
+        <option>มีค่าใช้จ่ายที่ไม่มีบิล</option>
+      </select>
+      <div id="ex_nb_area" style="display:none;">
+        <input type="text" id="ex_nb_name" placeholder="ชื่อรายการไม่มีบิล">
+        <input type="number" id="ex_nb_val" placeholder="จำนวนเงิน (บาท)">
+      </div>
+
+      <select id="ex_scr_type" onchange="document.getElementById('ex_scr_area').style.display=(this.value!=='ไม่มี'?'block':'none')">
+        <option value="ไม่มี">-- ตั้งเบิกค่าประชาคม (ถ้ามี) --</option>
+        <option>มีตั้งเบิกค่าประชาคม</option>
+      </select>
+      <div id="ex_scr_area" style="display:none;">
+        <div style="text-align:left; font-size:14px; margin-bottom:5px; color:var(--accent-blue);">📅 วันที่ทำประชาคม (บังคับ)</div>
+        <input type="date" id="ex_scr_date">
+        <input type="text" id="ex_scr_site" placeholder="ชื่อไซต์ประชาคม (บังคับ)">
+        <input type="text" id="ex_scr_prov" placeholder="จังหวัดประชาคม (บังคับ)">
+        <input type="number" id="ex_scr_val" placeholder="จำนวนเงิน (บาท) (บังคับ)">
+      </div>
+    </div>
+
+    <div id="expense-upload">
+      <div class="section-title">📸 บันทึกรูปบิล (ไม่เกิน 10 รูป)</div>
+      <input type="file" id="ex_files" accept="image/*" multiple onchange="validateFiles(this)">
+      <div id="file-list" style="color:green; font-size:12px; margin-bottom:15px; margin-top:-10px;"></div>
+    </div>
+
+    <div id="expense-summary">
+      <div class="section-title">📊 สรุปยอดเบิกจ่าย</div>
+      <div id="sum-details" class="summary-box"></div>
+      <div id="sum-total" style="font-size:22px; font-weight:bold; color:#2e7d32; margin-bottom:20px;"></div>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="main-btn" style="background:#888;" onclick="expenseStep=1; renderExpenseStep()">แก้ไข</button>
+        <button type="button" class="main-btn" style="background:#2e7d32;" onclick="confirmExpenseFinal()">ยืนยันส่งข้อมูล</button>
+      </div>
+    </div>
+
+    <button type="button" id="btn-action" class="main-btn" onclick="handleFlow()">ยืนยันพิกัดและถ่ายรูป</button>
+
+    <div id="finish-msg">
+      <div class="icon-success"><i class="fas fa-check-circle"></i></div>
+      <div style="font-size: 24px; font-weight: bold; color: #4CAF50; margin-bottom: 10px;">บันทึกเรียบร้อยแล้ว</div>
+      <div id="finish-text-1" class="welcome-msg"></div>
+      <div id="finish-text-2" class="safety-msg"></div>
+      <button type="button" class="main-btn" onclick="location.reload()" style="background:#1A73E8; margin-top:20px;">กลับหน้าแรก</button>
+    </div>
   </div>
 
-  <div id="page3" class="page">
-    <h2>บันทึกค่าใช้จ่าย</h2>
-    <select id="expType">
-      <option value="ค่าเดินทาง">🚗 ค่าเดินทาง</option>
-      <option value="ค่าอาหาร">🍴 ค่าอาหาร</option>
-      <option value="วัสดุอุปกรณ์">🛠️ วัสดุอุปกรณ์</option>
-    </select>
-    <input type="number" id="expAmount" placeholder="ระบุจำนวนเงิน">
-    <button class="btn btn-main" onclick="selectTask('EXPENSE')">ถ่ายรูปใบเสร็จ & บันทึก</button>
-    <button class="btn btn-back" onclick="showPage(2)">ย้อนกลับ</button>
-  </div>
-
-  <div id="page4" class="page">
-    <h2 id="taskTitle">ยืนยันข้อมูล</h2>
-    <img id="preview">
-    <p id="statusTxt">รอพิกัด GPS...</p>
-    <button class="btn btn-main" id="finalBtn" onclick="finalSubmit()" disabled>กำลังเตรียมข้อมูล...</button>
-    <button class="btn btn-back" onclick="showPage(2)">ยกเลิก</button>
-  </div>
-</div>
-
-<input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none;" onchange="handleImage(this)">
-
-<script>
+  <input type="file" id="fileInput" accept="image/*" capture="camera" style="display:none" onchange="uploadPhoto(this)">
+  <script>
+  // URL Web App ล่าสุดของคุณ
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwk-spmOFdk-ZLRHhTkJXUshNWmJ6DqvdbNqUByszqLMDVujm7XFe0by-VDVUmNgZmuoQ/exec";
-  let currentTask = "";
-  let base64Image = "";
 
-  // ฟังก์ชันสลับหน้า (เหมือนการกดย้อนกลับ/ถัดไปใน M1-5)
-  function showPage(pageNumber) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page' + pageNumber).classList.add('active');
+  var selectedStatus = "";
+  var currentRow = 0;
+  var reportStep = 1; 
+  var siteIdx = 1;
+  var expenseStep = 1;
+  var selectedFiles = [];
+
+  // ฟังก์ชันมาตรฐานจาก M1-5
+  function checkCar() {
+    var carOpt = document.getElementById('q_car').value;
+    document.getElementById('q_car_name').style.display = (carOpt == "ระบุชื่อเล่น") ? "block" : "none";
+  }
+  function checkHotel() {
+    var locVal = document.getElementById('q_loc').value;
+    document.getElementById('q_hotel_prov').style.display = (locVal == "โรงแรม") ? "block" : "none";
   }
 
-  function selectTask(task) {
-    const name = document.getElementById('userName').value;
-    if(!name) { alert("ระบุชื่อก่อนครับ"); return showPage(1); }
-    currentTask = task;
-    document.getElementById('cameraInput').click(); // เปิดกล้องทันทีเหมือนของเดิม
-  }
+  function selectStatus(status) {
+    selectedStatus = status;
+    document.getElementById('page-welcome').style.display = 'none';
+    document.getElementById('page-record').style.display = 'block';
+    document.getElementById('display-status').innerText = "สถานะ: " + status;
+    document.getElementById('extra-questions').style.display = 'none';
+    document.getElementById('report-section').style.display = 'none';
+    document.getElementById('site-section').style.display = 'none';
+    document.getElementById('expense-section').style.display = 'none';
+    document.getElementById('expense-upload').style.display = 'none';
+    document.getElementById('expense-summary').style.display = 'none';
+    document.getElementById('btn-action').style.display = 'block';
 
-  function handleImage(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        base64Image = e.target.result;
-        document.getElementById('preview').src = base64Image;
-        document.getElementById('preview').style.display = "block";
-        document.getElementById('taskTitle').innerText = "ยืนยันการบันทึก: " + currentTask;
-        showPage(4); // ไปหน้ายืนยัน
-        getGPS();
-      };
-      reader.readAsDataURL(input.files[0]);
+    if (status === 'Report') {
+      document.getElementById('report-section').style.display = 'block';
+      document.getElementById('btn-action').innerText = "ส่งรายงาน / ไปต่อ";
+    } else if (status === 'Expenses') {
+      expenseStep = 1;
+      renderExpenseStep();
+    } else {
+      if (status === 'Site Check In') {
+        document.getElementById('btn-action').innerText = "ยืนยันพิกัดและถ่ายรูป";
+      } else {
+        document.getElementById('extra-questions').style.display = 'block';
+        document.getElementById('btn-action').innerText = "ยืนยันพิกัดและบันทึกรูปเลขไมล์";
+        const qLocHead = document.getElementById('opt_loc_head');
+        const optDynamic = document.getElementById('opt_dynamic');
+        const optHotel = document.getElementById('opt_hotel');
+        const qPlan = document.getElementById('q_plan');
+        if (status === 'Check In') {
+          qLocHead.innerText = "เช็คอินที่ไหน? (บังคับเลือก)"; optDynamic.innerText = "กำลังออกจากที่พัก"; optDynamic.value = "กำลังออกจากที่พัก"; optHotel.style.display = "none"; qPlan.placeholder = "PLAN: งานที่จะทำในวันนี้ (บังคับกรอก)";
+        } else {
+          qLocHead.innerText = "เช็คเอ้าที่ไหน? (บังคับเลือก)"; optDynamic.innerText = "บ้าน"; optDynamic.value = "บ้าน"; optHotel.style.display = "block"; qPlan.placeholder = "BRIFE: สรุปงานที่ทำในวันนี้สั้น ๆ (บังคับกรอก)";
+        }
+      }
     }
   }
 
-  function getGPS() {
-    navigator.geolocation.getCurrentPosition(pos => {
-      window.currentPos = pos;
-      document.getElementById('statusTxt').innerText = "📍 พิกัดพร้อมแล้ว";
-      document.getElementById('finalBtn').disabled = false;
-      document.getElementById('finalBtn').innerText = "ส่งข้อมูลเดี๋ยวนี้";
-    }, err => {
-      alert("กรุณาเปิด GPS");
-    });
+  function handleFlow() {
+    if (selectedStatus === 'Report') processReport();
+    else if (selectedStatus === 'Expenses') processExpense();
+    else getGPS();
   }
 
-  function finalSubmit() {
-    const name = document.getElementById('userName').value;
-    const expType = document.getElementById('expType').value;
-    const expAmount = document.getElementById('expAmount').value;
-    
-    document.getElementById('finalBtn').innerText = "⌛ กำลังส่ง...";
-    document.getElementById('finalBtn').disabled = true;
+  function renderExpenseStep() {
+    document.getElementById('expense-section').style.display = (expenseStep === 1 ? 'block' : 'none');
+    document.getElementById('expense-upload').style.display = (expenseStep === 2 ? 'block' : 'none');
+    document.getElementById('expense-summary').style.display = (expenseStep === 3 ? 'block' : 'none');
+    document.getElementById('btn-action').style.display = (expenseStep === 3 ? 'none' : 'block');
+    document.getElementById('btn-action').innerText = (expenseStep === 1 ? "ถัดไป: เลือกรูปบิล" : "สรุปยอดเบิกจ่าย");
+  }
 
-    const payload = {
-      action: currentTask,
-      values: [
-        new Date().toLocaleString('th-TH'),
-        name,
-        currentTask,
-        window.currentPos.coords.latitude,
-        window.currentPos.coords.longitude,
-        currentTask === "EXPENSE" ? expType : "",
-        currentTask === "EXPENSE" ? expAmount : ""
-      ],
-      image: base64Image
-    };
+  function validateFiles(input) {
+    selectedFiles = Array.from(input.files);
+    if(selectedFiles.length > 10) { alert("ห้ามเกิน 10 รูปครับ"); input.value=""; return; }
+    document.getElementById('file-list').innerText = "เลือกแล้ว " + selectedFiles.length + " รูป";
+  }
 
+  function processExpense() {
+    if(!document.getElementById('userName').value) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    if(expenseStep === 1) {
+      if(!document.getElementById('ex_date').value || !document.getElementById('ex_region').value) { alert("กรอกวันที่และภาคให้ครบ"); return; }
+      if(document.getElementById('ex_scr_type').value === 'มีตั้งเบิกค่าประชาคม') {
+        if(!document.getElementById('ex_scr_date').value || !document.getElementById('ex_scr_site').value || !document.getElementById('ex_scr_prov').value || !document.getElementById('ex_scr_val').value) {
+          alert("กรุณากรอกข้อมูลตั้งเบิกค่าประชาคมให้ครบทุกช่อง"); return;
+        }
+      }
+      expenseStep = 2; renderExpenseStep();
+    } else if(expenseStep === 2) {
+      if(selectedFiles.length === 0) { alert("กรุณาเลือกรูปบิลอย่างน้อย 1 รูป"); return; }
+      showSummary();
+    }
+  }
+
+  function showSummary() {
+    expenseStep = 3; renderExpenseStep();
+    var oil = parseFloat(document.getElementById('ex_oil').value || 0);
+    var hotel = parseFloat(document.getElementById('ex_hotel').value || 0);
+    var ccr = parseFloat(document.getElementById('ex_ccr').value || 0);
+    var trav = parseFloat(document.getElementById('ex_trav').value || 0);
+    var spc = parseFloat(document.getElementById('ex_spc_val').value || 0);
+    var nb = parseFloat(document.getElementById('ex_nb_val').value || 0);
+    var scr = parseFloat(document.getElementById('ex_scr_val').value || 0);
+    var total = oil + hotel + ccr + trav + spc + nb + scr;
+    var html = "";
+    if(oil > 0) html += "⛽ ค่าน้ำมัน: " + oil + " บาท<br>";
+    if(hotel > 0) html += "🏨 ค่าที่พัก: " + hotel + " บาท<br>";
+    if(ccr > 0) html += "🍪 ค่าของประชาคม: " + ccr + " บาท<br>";
+    if(trav > 0) html += "🚗 ค่าเดินทาง: " + trav + " บาท<br>";
+    if(spc > 0) html += "✨ ค่าใช้จ่ายพิเศษ: " + spc + " บาท<br>";
+    if(nb > 0) html += "📝 ไม่มีบิล: " + nb + " บาท<br>";
+    if(scr > 0) html += "📢 ค่าประชาคม: " + scr + " บาท<br>";
+    document.getElementById('sum-details').innerHTML = html || "ไม่มีรายการเบิกเงิน";
+    document.getElementById('sum-total').innerText = "ยอดรวมทั้งสิ้น: " + total.toLocaleString() + " บาท";
+  }
+
+  // --- ปรับฟังก์ชันส่งข้อมูลจาก google.script.run เป็น fetch ---
+
+  function sendToSheet(payload, callback) {
     fetch(WEB_APP_URL, {
       method: "POST",
       mode: "no-cors",
       body: JSON.stringify(payload)
-    }).then(() => {
-      alert("✅ บันทึกสำเร็จ!");
-      location.reload(); // กลับหน้าแรกสุด
-    }).catch(err => alert("Error: " + err));
+    }).then(() => { if(callback) callback(); });
+  }
+
+  function confirmExpenseFinal() {
+    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูลและอัปโหลดรูป...";
+    document.getElementById('expense-summary').style.display = 'none';
+    var d = new Array(57).fill("");
+    d[0] = document.getElementById('ex_date').value;
+    d[2] = document.getElementById('userName').value;
+    d[7] = "Expenses";
+    d[14] = document.getElementById('ex_region').value;
+    d[15] = document.getElementById('ex_type').value;
+    d[16] = document.getElementById('ex_type_etc').value;
+    d[42] = document.getElementById('ex_site').value;
+    d[43] = document.getElementById('ex_prov').value;
+    d[44] = document.getElementById('ex_oil').value || 0;
+    d[45] = document.getElementById('ex_hotel').value || 0;
+    d[46] = document.getElementById('ex_ccr').value || 0;
+    d[47] = document.getElementById('ex_trav').value || 0;
+    d[48] = document.getElementById('ex_spc_type').value;
+    d[49] = document.getElementById('ex_spc_val').value || 0;
+    d[50] = document.getElementById('ex_nb_name').value || "ไม่มี";
+    d[51] = document.getElementById('ex_nb_val').value || 0;
+    d[52] = document.getElementById('ex_scr_type').value;
+    d[53] = document.getElementById('ex_scr_site').value || ""; 
+    d[54] = document.getElementById('ex_scr_prov').value || ""; 
+    d[55] = document.getElementById('ex_scr_val').value || 0;  
+    d[56] = document.getElementById('ex_scr_date').value || "";
+
+    var promises = selectedFiles.map(file => {
+      return new Promise(resolve => {
+        var reader = new FileReader();
+        reader.onload = e => resolve({name: file.name, data: e.target.result});
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises).then(files => {
+      sendToSheet({
+        action: "SAVE_EXPENSES_WITH_FILES",
+        values: d,
+        files: files,
+        region: document.getElementById('ex_region').value
+      }, finishDisplay);
+    });
+  }
+
+  function processReport() {
+    var name = document.getElementById('userName').value;
+    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    if (reportStep === 1) {
+      var reportDate = document.getElementById('q_date_rep').value;
+      if(!document.getElementById('q_region').value || !reportDate || !document.getElementById('q_type').value) { alert("ข้อมูลไม่ครบ"); return; }
+      if(document.getElementById('q_type').value === 'งาน CR') {
+        reportStep = 2; siteIdx = 1; document.getElementById('site-container').innerHTML = ''; renderSite(1);
+      } else {
+        if(!document.getElementById('q_job_detail').value) { alert("ระบุรายละเอียดงาน"); return; }
+        sendReportFinal();
+      }
+    } else {
+      if(!validateSite(siteIdx)) return;
+      var nextEl = document.getElementById("next_s_" + siteIdx);
+      if(siteIdx < 4 && nextEl && nextEl.value.includes("มีไซต์ที่")) {
+        siteIdx++; renderSite(siteIdx);
+      } else { sendReportFinal(); }
+    }
+  }
+
+  function renderSite(n) {
+    document.getElementById('report-section').style.display = 'none';
+    document.getElementById('site-section').style.display = 'block';
+    document.getElementById('btn-action').innerText = (n === 4) ? "ส่งรายงาน" : "ถัดไป / ส่งรายงาน";
+    for(var j=1; j<n; j++){ if(document.getElementById('site_wrapper_' + j)) document.getElementById('site_wrapper_' + j).style.display = 'none'; }
+    var container = document.getElementById('site-container');
+    var div = document.createElement('div');
+    div.id = 'site_wrapper_' + n;
+    div.innerHTML = `<div class="section-title">ข้อมูลไซต์ที่ ${n}</div>
+      ${n === 1 ? `<select id="s_region_job"><option value="">-- ทำงานของภาค --</option><option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option></select>` : ''}
+      <input type="text" id="s_name_${n}" placeholder="ชื่อไซต์">
+      <input type="text" id="s_prov_${n}" placeholder="จังหวัด">
+      <select id="s_job_${n}" onchange="document.getElementById('s_etc_${n}').style.display = (this.value === 'อื่น ๆ' ? 'block' : 'none')">
+        <option value="">-- เนื้องาน --</option>
+        <option>ไม่ได้ลงพื้นที่</option><option>ลงพื้นที่ทำ CR</option><option>อื่น ๆ</option>
+      </select>
+      <input type="text" id="s_etc_${n}" placeholder="ระบุชนิดงาน" style="display:none;">
+      <textarea id="s_det_${n}" placeholder="ระบุรายละเอียดงาน"></textarea>
+      <input type="text" id="s_ld_${n}" placeholder="ชื่อผู้นำ">
+      ${n < 4 ? `<select id="next_s_${n}"><option value="ไม่มี">ไม่มี (ส่งรายงาน)</option><option value="มีไซต์ที่ ${n+1}">มีไซต์ที่ ${n+1}</option></select>` : ''}`;
+    container.appendChild(div);
+  }
+
+  function validateSite(n) {
+    if(!document.getElementById(`s_name_${n}`).value || !document.getElementById(`s_prov_${n}`).value) return false;
+    return true;
+  }
+
+  function sendReportFinal() {
+    document.getElementById('btn-action').disabled = true;
+    document.getElementById('status-text').innerText = "🔄 กำลังส่งรายงาน...";
+    var d = new Array(42).fill("");
+    d[0] = document.getElementById('q_date_rep').value;
+    d[2] = document.getElementById('userName').value;
+    d[7] = "Report";
+    d[9] = document.getElementById('q_buddy').value;
+    d[14] = document.getElementById('q_region').value;
+    d[15] = document.getElementById('q_type').value;
+    d[17] = document.getElementById('q_job_detail').value;
+    if(d[15] === 'งาน CR') {
+      d[17] = document.getElementById('s_region_job').value;
+      for(var i=1; i <= siteIdx; i++) {
+        var base = 18 + ((i-1)*6);
+        d[base] = document.getElementById('s_name_' + i).value; 
+        d[base+1] = document.getElementById('s_prov_' + i).value; 
+        d[base+2] = document.getElementById('s_job_' + i).value;
+        d[base+4] = document.getElementById('s_det_' + i).value; 
+        d[base+5] = document.getElementById('s_ld_' + i).value;
+      }
+    }
+    sendToSheet({ action: "SAVE_REPORT", values: d }, finishDisplay);
+  }
+
+  function getGPS() {
+    var name = document.getElementById('userName').value;
+    if (!name) { alert("กรอกชื่อก่อนครับ"); return; }
+    document.getElementById('status-text').innerText = "⏳ กำลังดึงพิกัด...";
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      window.tempCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      document.getElementById('status-text').innerText = "📍 พิกัดพร้อม! ถ่ายรูปเลย";
+      document.getElementById('fileInput').click();
+    }, err => alert("GPS Error"), {enableHighAccuracy: true});
+  }
+
+  function uploadPhoto(input) {
+    if (!input.files[0]) return;
+    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูล...";
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var name = document.getElementById('userName').value;
+      var q_loc = document.getElementById('q_loc').value;
+      var q_plan = document.getElementById('q_plan').value;
+      var finalCar = (document.getElementById('q_car').value === "รถตัวเอง") ? name : document.getElementById('q_car_name').value;
+      var extraData = [document.getElementById('q_with').value || "-", finalCar, document.getElementById('q_mile').value || "0", q_loc || "-", q_plan || "-"];
+      
+      sendToSheet({
+        action: "FULL_SAVE",
+        values: [name, window.tempCoords.lat, window.tempCoords.lng, selectedStatus, "Mobile", ...extraData],
+        image: e.target.result
+      }, finishDisplay);
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function finishDisplay() {
+    document.getElementById('finish-msg').style.display = "block";
+    document.getElementById('btn-action').style.display = "none";
+    document.getElementById('page-record').querySelectorAll('input, select, textarea, div').forEach(el => {
+      if(el.id !== 'finish-msg' && !el.closest('#finish-msg')) el.style.display = 'none';
+    });
+    if (['Check Out', 'Report', 'Expenses'].includes(selectedStatus)) {
+      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ แบ่งเวลาในการพักผ่อนให้เพียงพอ...";
+      document.getElementById('finish-text-2').innerText = "Take care and Sleep well.";
+    } else {
+      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ ขอให้ทำงานด้วยความสนุกสนาน...";
+      document.getElementById('finish-text-2').innerText = "Safety First and Have a nice day";
+    }
   }
 </script>
 </body>
