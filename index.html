@@ -283,4 +283,11 @@
     var trav = parseFloat(document.getElementById('ex_trav').value || 0);
     var spc = parseFloat(document.getElementById('ex_spc_val').value || 0);
     var nb = parseFloat(document.getElementById('ex_nb_val').value || 0);
-    var scr = parseFloat(document.getElementById
+    var scr = parseFloat(document.getElementById('ex_scr_val').value || 0);
+    var total = oil + hotel + ccr + trav + spc + nb + scr;
+    var html = "";
+    if(oil > 0) html += "⛽ ค่าน้ำมัน: " + oil + " บาท<br>";
+    if(hotel > 0) html += "🏨 ค่าที่พัก: " + hotel + " บาท<br>";
+    if(ccr > 0) html += "🍪 ค่าของประชาคม: " + ccr + " บาท<br>";
+    if(trav > 0) html += "🚗 ค่าเดินทาง: " + trav + " บาท<br>";
+    if(spc > 0) html += "✨
