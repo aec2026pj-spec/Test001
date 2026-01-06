@@ -55,9 +55,9 @@
   <div id="page-welcome" class="card">
     <h2 style="color:#78909C;">2026 AEC Check IN</h2>
     <p>กรุณาเลือกสถานะของคุณเพื่อเข้าสู่ระบบ</p>
-    <button type="button" class="pos-btn btn-site" onclick="selectStatus('Site Check In')">📍 Site Check In</button>
-    <button type="button" class="pos-btn btn-in" onclick="selectStatus('Check In')">💪 เริ่มงาน (Check In)</button>
-    <button type="button" class="pos-btn btn-out" onclick="selectStatus('Check Out')">😴 เลิกงาน (Check Out)</button>
+    <button type="button" class="pos-btn btn-site" onclick="selectStatus('Site Check In')">📍 Site Check In (เช็คอินหน้าไซต์)</button>
+    <button type="button" class="pos-btn btn-in" onclick="selectStatus('Check In')">💪 Check In (เริ่มงาน)</button>
+    <button type="button" class="pos-btn btn-out" onclick="selectStatus('Check Out')">😴 Check Out (เลิกงาน)</button>
     <button type="button" class="pos-btn btn-report" onclick="selectStatus('Report')">📝 Report (ส่งรายงาน)</button>
     <button type="button" class="pos-btn btn-expense" onclick="selectStatus('Expenses')">💰 Expenses (เบิกค่าใช้จ่าย)</button>
   </div>
@@ -181,7 +181,7 @@
 
   <input type="file" id="fileInput" accept="image/*" capture="camera" style="display:none" onchange="uploadPhoto(this)">
   <script>
-  // URL Web App ล่าสุดของคุณ
+  // URL Web App จาก Google Apps Script
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwk-spmOFdk-ZLRHhTkJXUshNWmJ6DqvdbNqUByszqLMDVujm7XFe0by-VDVUmNgZmuoQ/exec";
 
   var selectedStatus = "";
@@ -191,11 +191,11 @@
   var expenseStep = 1;
   var selectedFiles = [];
 
-  // ฟังก์ชันมาตรฐานจาก M1-5
   function checkCar() {
     var carOpt = document.getElementById('q_car').value;
     document.getElementById('q_car_name').style.display = (carOpt == "ระบุชื่อเล่น") ? "block" : "none";
   }
+
   function checkHotel() {
     var locVal = document.getElementById('q_loc').value;
     document.getElementById('q_hotel_prov').style.display = (locVal == "โรงแรม") ? "block" : "none";
@@ -283,193 +283,4 @@
     var trav = parseFloat(document.getElementById('ex_trav').value || 0);
     var spc = parseFloat(document.getElementById('ex_spc_val').value || 0);
     var nb = parseFloat(document.getElementById('ex_nb_val').value || 0);
-    var scr = parseFloat(document.getElementById('ex_scr_val').value || 0);
-    var total = oil + hotel + ccr + trav + spc + nb + scr;
-    var html = "";
-    if(oil > 0) html += "⛽ ค่าน้ำมัน: " + oil + " บาท<br>";
-    if(hotel > 0) html += "🏨 ค่าที่พัก: " + hotel + " บาท<br>";
-    if(ccr > 0) html += "🍪 ค่าของประชาคม: " + ccr + " บาท<br>";
-    if(trav > 0) html += "🚗 ค่าเดินทาง: " + trav + " บาท<br>";
-    if(spc > 0) html += "✨ ค่าใช้จ่ายพิเศษ: " + spc + " บาท<br>";
-    if(nb > 0) html += "📝 ไม่มีบิล: " + nb + " บาท<br>";
-    if(scr > 0) html += "📢 ค่าประชาคม: " + scr + " บาท<br>";
-    document.getElementById('sum-details').innerHTML = html || "ไม่มีรายการเบิกเงิน";
-    document.getElementById('sum-total').innerText = "ยอดรวมทั้งสิ้น: " + total.toLocaleString() + " บาท";
-  }
-
-  // --- ปรับฟังก์ชันส่งข้อมูลจาก google.script.run เป็น fetch ---
-
-  function sendToSheet(payload, callback) {
-    fetch(WEB_APP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify(payload)
-    }).then(() => { if(callback) callback(); });
-  }
-
-  function confirmExpenseFinal() {
-    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูลและอัปโหลดรูป...";
-    document.getElementById('expense-summary').style.display = 'none';
-    var d = new Array(57).fill("");
-    d[0] = document.getElementById('ex_date').value;
-    d[2] = document.getElementById('userName').value;
-    d[7] = "Expenses";
-    d[14] = document.getElementById('ex_region').value;
-    d[15] = document.getElementById('ex_type').value;
-    d[16] = document.getElementById('ex_type_etc').value;
-    d[42] = document.getElementById('ex_site').value;
-    d[43] = document.getElementById('ex_prov').value;
-    d[44] = document.getElementById('ex_oil').value || 0;
-    d[45] = document.getElementById('ex_hotel').value || 0;
-    d[46] = document.getElementById('ex_ccr').value || 0;
-    d[47] = document.getElementById('ex_trav').value || 0;
-    d[48] = document.getElementById('ex_spc_type').value;
-    d[49] = document.getElementById('ex_spc_val').value || 0;
-    d[50] = document.getElementById('ex_nb_name').value || "ไม่มี";
-    d[51] = document.getElementById('ex_nb_val').value || 0;
-    d[52] = document.getElementById('ex_scr_type').value;
-    d[53] = document.getElementById('ex_scr_site').value || ""; 
-    d[54] = document.getElementById('ex_scr_prov').value || ""; 
-    d[55] = document.getElementById('ex_scr_val').value || 0;  
-    d[56] = document.getElementById('ex_scr_date').value || "";
-
-    var promises = selectedFiles.map(file => {
-      return new Promise(resolve => {
-        var reader = new FileReader();
-        reader.onload = e => resolve({name: file.name, data: e.target.result});
-        reader.readAsDataURL(file);
-      });
-    });
-
-    Promise.all(promises).then(files => {
-      sendToSheet({
-        action: "SAVE_EXPENSES_WITH_FILES",
-        values: d,
-        files: files,
-        region: document.getElementById('ex_region').value
-      }, finishDisplay);
-    });
-  }
-
-  function processReport() {
-    var name = document.getElementById('userName').value;
-    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
-    if (reportStep === 1) {
-      var reportDate = document.getElementById('q_date_rep').value;
-      if(!document.getElementById('q_region').value || !reportDate || !document.getElementById('q_type').value) { alert("ข้อมูลไม่ครบ"); return; }
-      if(document.getElementById('q_type').value === 'งาน CR') {
-        reportStep = 2; siteIdx = 1; document.getElementById('site-container').innerHTML = ''; renderSite(1);
-      } else {
-        if(!document.getElementById('q_job_detail').value) { alert("ระบุรายละเอียดงาน"); return; }
-        sendReportFinal();
-      }
-    } else {
-      if(!validateSite(siteIdx)) return;
-      var nextEl = document.getElementById("next_s_" + siteIdx);
-      if(siteIdx < 4 && nextEl && nextEl.value.includes("มีไซต์ที่")) {
-        siteIdx++; renderSite(siteIdx);
-      } else { sendReportFinal(); }
-    }
-  }
-
-  function renderSite(n) {
-    document.getElementById('report-section').style.display = 'none';
-    document.getElementById('site-section').style.display = 'block';
-    document.getElementById('btn-action').innerText = (n === 4) ? "ส่งรายงาน" : "ถัดไป / ส่งรายงาน";
-    for(var j=1; j<n; j++){ if(document.getElementById('site_wrapper_' + j)) document.getElementById('site_wrapper_' + j).style.display = 'none'; }
-    var container = document.getElementById('site-container');
-    var div = document.createElement('div');
-    div.id = 'site_wrapper_' + n;
-    div.innerHTML = `<div class="section-title">ข้อมูลไซต์ที่ ${n}</div>
-      ${n === 1 ? `<select id="s_region_job"><option value="">-- ทำงานของภาค --</option><option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option></select>` : ''}
-      <input type="text" id="s_name_${n}" placeholder="ชื่อไซต์">
-      <input type="text" id="s_prov_${n}" placeholder="จังหวัด">
-      <select id="s_job_${n}" onchange="document.getElementById('s_etc_${n}').style.display = (this.value === 'อื่น ๆ' ? 'block' : 'none')">
-        <option value="">-- เนื้องาน --</option>
-        <option>ไม่ได้ลงพื้นที่</option><option>ลงพื้นที่ทำ CR</option><option>อื่น ๆ</option>
-      </select>
-      <input type="text" id="s_etc_${n}" placeholder="ระบุชนิดงาน" style="display:none;">
-      <textarea id="s_det_${n}" placeholder="ระบุรายละเอียดงาน"></textarea>
-      <input type="text" id="s_ld_${n}" placeholder="ชื่อผู้นำ">
-      ${n < 4 ? `<select id="next_s_${n}"><option value="ไม่มี">ไม่มี (ส่งรายงาน)</option><option value="มีไซต์ที่ ${n+1}">มีไซต์ที่ ${n+1}</option></select>` : ''}`;
-    container.appendChild(div);
-  }
-
-  function validateSite(n) {
-    if(!document.getElementById(`s_name_${n}`).value || !document.getElementById(`s_prov_${n}`).value) return false;
-    return true;
-  }
-
-  function sendReportFinal() {
-    document.getElementById('btn-action').disabled = true;
-    document.getElementById('status-text').innerText = "🔄 กำลังส่งรายงาน...";
-    var d = new Array(42).fill("");
-    d[0] = document.getElementById('q_date_rep').value;
-    d[2] = document.getElementById('userName').value;
-    d[7] = "Report";
-    d[9] = document.getElementById('q_buddy').value;
-    d[14] = document.getElementById('q_region').value;
-    d[15] = document.getElementById('q_type').value;
-    d[17] = document.getElementById('q_job_detail').value;
-    if(d[15] === 'งาน CR') {
-      d[17] = document.getElementById('s_region_job').value;
-      for(var i=1; i <= siteIdx; i++) {
-        var base = 18 + ((i-1)*6);
-        d[base] = document.getElementById('s_name_' + i).value; 
-        d[base+1] = document.getElementById('s_prov_' + i).value; 
-        d[base+2] = document.getElementById('s_job_' + i).value;
-        d[base+4] = document.getElementById('s_det_' + i).value; 
-        d[base+5] = document.getElementById('s_ld_' + i).value;
-      }
-    }
-    sendToSheet({ action: "SAVE_REPORT", values: d }, finishDisplay);
-  }
-
-  function getGPS() {
-    var name = document.getElementById('userName').value;
-    if (!name) { alert("กรอกชื่อก่อนครับ"); return; }
-    document.getElementById('status-text').innerText = "⏳ กำลังดึงพิกัด...";
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      window.tempCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      document.getElementById('status-text').innerText = "📍 พิกัดพร้อม! ถ่ายรูปเลย";
-      document.getElementById('fileInput').click();
-    }, err => alert("GPS Error"), {enableHighAccuracy: true});
-  }
-
-  function uploadPhoto(input) {
-    if (!input.files[0]) return;
-    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูล...";
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var name = document.getElementById('userName').value;
-      var q_loc = document.getElementById('q_loc').value;
-      var q_plan = document.getElementById('q_plan').value;
-      var finalCar = (document.getElementById('q_car').value === "รถตัวเอง") ? name : document.getElementById('q_car_name').value;
-      var extraData = [document.getElementById('q_with').value || "-", finalCar, document.getElementById('q_mile').value || "0", q_loc || "-", q_plan || "-"];
-      
-      sendToSheet({
-        action: "FULL_SAVE",
-        values: [name, window.tempCoords.lat, window.tempCoords.lng, selectedStatus, "Mobile", ...extraData],
-        image: e.target.result
-      }, finishDisplay);
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-
-  function finishDisplay() {
-    document.getElementById('finish-msg').style.display = "block";
-    document.getElementById('btn-action').style.display = "none";
-    document.getElementById('page-record').querySelectorAll('input, select, textarea, div').forEach(el => {
-      if(el.id !== 'finish-msg' && !el.closest('#finish-msg')) el.style.display = 'none';
-    });
-    if (['Check Out', 'Report', 'Expenses'].includes(selectedStatus)) {
-      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ แบ่งเวลาในการพักผ่อนให้เพียงพอ...";
-      document.getElementById('finish-text-2').innerText = "Take care and Sleep well.";
-    } else {
-      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ ขอให้ทำงานด้วยความสนุกสนาน...";
-      document.getElementById('finish-text-2').innerText = "Safety First and Have a nice day";
-    }
-  }
-</script>
-</body>
-</html>
+    var scr = parseFloat(document.getElementById
