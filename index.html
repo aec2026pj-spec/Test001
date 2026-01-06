@@ -1,88 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SCIn 2026 - Final Test</title>
+  <title>CODE of 2026 SCIn</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; padding: 20px; background: #f0f4f8; color: #333; }
-    .card { background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 350px; margin: auto; }
-    h3 { color: #1A73E8; margin-bottom: 20px; }
-    input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; text-align: center; }
-    input[type="file"] { margin-bottom: 15px; font-size: 14px; }
-    button { padding: 15px; width: 100%; background: #1A73E8; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 17px; font-weight: bold; transition: 0.3s; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    #preview { width: 100%; border-radius: 12px; display: none; margin-bottom: 15px; border: 2px solid #e0e0e0; }
-    #status { margin-top: 20px; padding: 10px; border-radius: 8px; font-size: 14px; min-height: 20px; }
-    .loading { color: #f39c12; font-weight: bold; }
-    .success { color: #27ae60; font-weight: bold; background: #e8f5e9; }
-    .error { color: #c0392b; font-weight: bold; background: #fdecea; }
+    :root {
+      --primary-color: #a8dadc;
+      --secondary-color: #f1faee;
+      --accent-color: #457b9d;
+      --text-color: #1d3557;
+    }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h2 { color: var(--accent-color); margin-bottom: 20px; }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-site { background-color: #ffb703; color: white; }
+    .btn-start { background-color: #2a9d8f; color: white; }
+    .btn-end { background-color: #e76f51; color: white; }
+    #preview {
+      width: 100%;
+      border-radius: 15px;
+      margin-top: 15px;
+      display: none;
+    }
+    #status {
+      margin-top: 15px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    /* สไตล์เพิ่มเติมคงตามต้นฉบับ M1-5 */
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h3>📸 SCIn 2026 Check-in</h3>
-    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">ทดสอบระบบบันทึกพิกัดและรูปถ่าย</p>
+    <h2>CODE of 2026 SCIn</h2>
+    <input type="text" id="userName" placeholder="ระบุชื่อผู้ใช้งาน" style="width:90%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px;">
     
-    <input type="text" id="testName" placeholder="พิมพ์ชื่อเล่นของคุณ">
+    <input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none;" onchange="handleImage(this)">
     
-    <div style="text-align: left; font-size: 13px; color: #1A73E8; margin-bottom: 5px; font-weight: bold;">📷 ถ่ายรูปหรือเลือกรูปภาพ:</div>
-    <input type="file" id="photoInput" accept="image/*" capture="camera" onchange="previewImage(this)">
-    
-    <img id="preview" alt="ตัวอย่างรูปถ่าย">
+    <button class="btn btn-site" onclick="triggerCamera('SITE')">📍 Site Check In</button>
+    <button class="btn btn-start" onclick="triggerCamera('START')">💪 เริ่มงาน</button>
+    <button class="btn btn-end" onclick="triggerCamera('END')">😴 เลิกงาน</button>
 
-    <button id="sendBtn" onclick="sendAllData()">ยืนยันพิกัดและส่งข้อมูล</button>
-    
-    <div id="status">รอทำรายการ...</div>
+    <img id="preview">
+    <div id="status">ยินดีต้อนรับ</div>
   </div>
 
   <script>
-    // URL Web App ล่าสุดที่คุณกำหนด
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNikSJyCkPzAa9UNEf38SGmhQEDzZdlEXRgDPiH217Seulvm0-jOFB06Kz01oBGWM2/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwk-spmOFdk-ZLRHhTkJXUshNWmJ6DqvdbNqUByszqLMDVujm7XFe0by-VDVUmNgZmuoQ/exec";
+    let currentAction = "";
     let base64Image = "";
 
-    // ฟังก์ชันแสดงตัวอย่างรูปภาพ
-    function previewImage(input) {
+    function triggerCamera(action) {
+      currentAction = action;
+      document.getElementById('cameraInput').click();
+    }
+
+    function handleImage(input) {
       if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          const preview = document.getElementById('preview');
-          preview.src = e.target.result;
-          preview.style.display = "block";
-          base64Image = e.target.result; // เก็บข้อมูลรูปในรูปแบบ Base64
+          base64Image = e.target.result;
+          document.getElementById('preview').src = base64Image;
+          document.getElementById('preview').style.display = "block";
+          processSubmission();
         };
         reader.readAsDataURL(input.files[0]);
       }
     }
 
-    function sendAllData() {
-      const name = document.getElementById('testName').value;
+    function processSubmission() {
+      const name = document.getElementById('userName').value;
       const statusDiv = document.getElementById('status');
-      const sendBtn = document.getElementById('sendBtn');
 
-      if(!name) { alert("กรุณาใส่ชื่อเล่นครับ"); return; }
-      if(!base64Image) { alert("กรุณาถ่ายรูปก่อนส่งครับ"); return; }
+      if (!name) {
+        alert("กรุณาระบุชื่อก่อนครับ");
+        return;
+      }
 
-      statusDiv.innerText = "⏳ กำลังดึงพิกัด GPS...";
-      statusDiv.className = "loading";
-      sendBtn.disabled = true;
+      statusDiv.innerText = "⏳ กำลังดึงพิกัดและบันทึกข้อมูล...";
+      statusDiv.style.color = "#f39c12";
 
       navigator.geolocation.getCurrentPosition(function(pos) {
-        
-        statusDiv.innerText = "🔄 พิกัดพร้อมแล้ว! กำลังส่งข้อมูลและรูปภาพ...";
-
         const payload = {
           values: [
-            name, 
-            pos.coords.latitude, 
-            pos.coords.longitude, 
-            "GitHub Pages (Final Test)",
-            new Date().toLocaleTimeString()
+            new Date().toLocaleString('th-TH'),
+            name,
+            currentAction,
+            pos.coords.latitude,
+            pos.coords.longitude,
+            "GitHub Pages"
           ],
           image: base64Image
         };
 
+        // ส่งข้อมูลไปยัง Apps Script ด้วย fetch
         fetch(WEB_APP_URL, {
           method: "POST",
           mode: "no-cors",
@@ -90,22 +132,21 @@
           body: JSON.stringify(payload)
         })
         .then(() => {
-          statusDiv.innerText = "✅ บันทึกสำเร็จ! รูปภาพถูกส่งเข้า Drive แล้ว";
-          statusDiv.className = "success";
-          alert("บันทึกข้อมูลและรูปภาพเรียบร้อยแล้ว!");
-          location.reload(); // รีโหลดหน้าเว็บเพื่อเริ่มใหม่
+          statusDiv.innerText = "✅ บันทึกสำเร็จ: " + currentAction;
+          statusDiv.style.color = "#27ae60";
+          alert("บันทึกข้อมูล " + currentAction + " เรียบร้อยแล้ว");
+          // รีเซ็ตหน้าจอ
+          document.getElementById('preview').style.display = "none";
+          base64Image = "";
         })
         .catch(err => {
-          statusDiv.innerText = "❌ เกิดข้อผิดพลาดในการส่ง";
-          statusDiv.className = "error";
-          sendBtn.disabled = false;
+          statusDiv.innerText = "❌ เกิดข้อผิดพลาด: " + err;
+          statusDiv.style.color = "#c0392b";
         });
 
       }, (err) => {
-        statusDiv.innerText = "❌ GPS Error: " + err.message;
-        statusDiv.className = "error";
-        sendBtn.disabled = false;
-        alert("กรุณาอนุญาตสิทธิ์การเข้าถึงพิกัด (GPS) เพื่อทำงานต่อ");
+        alert("กรุณาเปิด GPS และอนุญาตสิทธิ์พิกัด");
+        statusDiv.innerText = "❌ GPS Error";
       }, { enableHighAccuracy: true });
     }
   </script>
