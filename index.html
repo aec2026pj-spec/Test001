@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCIn 2026 Test Page</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
+    .card { background: white; padding: 20px; border-radius: 15px; max-width: 300px; margin: auto; }
+    button { padding: 15px; width: 100%; background: #1A73E8; color: white; border: none; border-radius: 10px; cursor: pointer; }
+    #status { margin-top: 20px; color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h3>Test Send to Sheet</h3>
+    <input type="text" id="testName" placeholder="ใส่ชื่อทดสอบ" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
+    <button onclick="testGPS()">ส่งพิกัดทดสอบ</button>
+    <div id="status">ยังไม่มีการส่งข้อมูล</div>
+  </div>
+
+  <script>
+    // *** วาง URL ที่ได้จากขั้นตอนที่ 1 ที่นี่ ***
+    const https://script.google.com/macros/s/AKfycbwGGh9w5IGqNBWKunzS1ePRue5AsedbIm1BdVTyvc11wK20gK9sZIMWtv8XbuPcQvpgaA/exec = "ใส่_URL_WEBAPP_ของคุณที่นี่";
+
+    function testGPS() {
+      const name = document.getElementById('testName').value;
+      if(!name) return alert("ใส่ชื่อก่อนครับ");
+
+      document.getElementById('status').innerText = "⏳ กำลังดึงพิกัด...";
+      
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const payload = {
+          action: "test",
+          values: [name, pos.coords.latitude, pos.coords.longitude, "จาก GitHub"]
+        };
+
+        document.getElementById('status').innerText = "🔄 กำลังส่งข้อมูล...";
+
+        fetch(WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors", // จำเป็นสำหรับการข้ามโดเมน
+          body: JSON.stringify(payload)
+        })
+        .then(() => {
+          document.getElementById('status').innerText = "✅ บันทึกสำเร็จ! (ไปดูใน Sheet)";
+        })
+        .catch(err => {
+          document.getElementById('status').innerText = "❌ ผิดพลาด: " + err;
+        });
+
+      }, (err) => alert("GPS Error: " + err.message));
+    }
+  </script>
+</body>
+</html>
