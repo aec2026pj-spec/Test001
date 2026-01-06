@@ -5,52 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SCIn 2026 Test Page</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
-    .card { background: white; padding: 20px; border-radius: 15px; max-width: 300px; margin: auto; }
-    button { padding: 15px; width: 100%; background: #1A73E8; color: white; border: none; border-radius: 10px; cursor: pointer; }
-    #status { margin-top: 20px; color: #666; font-size: 14px; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; padding: 20px; background: #f0f4f8; color: #333; }
+    .card { background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 350px; margin: auto; }
+    h3 { color: #1A73E8; margin-bottom: 20px; }
+    input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; text-align: center; }
+    button { padding: 15px; width: 100%; background: #1A73E8; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 17px; font-weight: bold; transition: 0.3s; }
+    button:active { background: #1557b0; transform: scale(0.98); }
+    #status { margin-top: 25px; padding: 10px; border-radius: 8px; font-size: 14px; min-height: 20px; }
+    .loading { color: #f39c12; font-weight: bold; }
+    .success { color: #27ae60; font-weight: bold; background: #e8f5e9; }
+    .error { color: #c0392b; font-weight: bold; background: #fdecea; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h3>Test Send to Sheet</h3>
-    <input type="text" id="testName" placeholder="ใส่ชื่อทดสอบ" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-    <button onclick="testGPS()">ส่งพิกัดทดสอบ</button>
-    <div id="status">ยังไม่มีการส่งข้อมูล</div>
+    <h3>🚀 SCIn 2026 Test</h3>
+    <p style="font-size: 14px; color: #666;">ทดสอบส่งข้อมูลจาก GitHub ไปยัง Google Sheet ใหม่</p>
+    
+    <input type="text" id="testName" placeholder="ระบุชื่อเล่นเพื่อทดสอบ">
+    
+    <button onclick="testGPS()">ส่งพิกัดและข้อมูล</button>
+    
+    <div id="status">รอการกดส่งข้อมูล...</div>
   </div>
 
   <script>
-    // *** วาง URL ที่ได้จากขั้นตอนที่ 1 ที่นี่ ***
-    const https://script.google.com/macros/s/AKfycbwGGh9w5IGqNBWKunzS1ePRue5AsedbIm1BdVTyvc11wK20gK9sZIMWtv8XbuPcQvpgaA/exec = "ใส่_URL_WEBAPP_ของคุณที่นี่";
+    // URL ของ Web App ที่คุณระบุมา
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwGGh9w5IGqNBWKunzS1ePRue5AsedbIm1BdVTyvc11wK20gK9sZIMWtv8XbuPcQvpgaA/exec";
 
     function testGPS() {
       const name = document.getElementById('testName').value;
-      if(!name) return alert("ใส่ชื่อก่อนครับ");
+      const statusDiv = document.getElementById('status');
 
-      document.getElementById('status').innerText = "⏳ กำลังดึงพิกัด...";
+      if(!name) {
+        alert("กรุณาใส่ชื่อก่อนทดสอบครับ");
+        return;
+      }
+
+      statusDiv.innerText = "⏳ กำลังดึงพิกัด GPS...";
+      statusDiv.className = "loading";
       
+      // ขอพิกัด GPS
       navigator.geolocation.getCurrentPosition(function(pos) {
+        
+        // เตรียมข้อมูลที่จะส่ง (สอดคล้องกับตัวรับ doPost ใน Apps Script)
         const payload = {
-          action: "test",
-          values: [name, pos.coords.latitude, pos.coords.longitude, "จาก GitHub"]
+          action: "test_from_github",
+          values: [
+            name, 
+            pos.coords.latitude, 
+            pos.coords.longitude, 
+            "ส่งจาก GitHub Pages",
+            new Date().toLocaleTimeString()
+          ]
         };
 
-        document.getElementById('status').innerText = "🔄 กำลังส่งข้อมูล...";
+        statusDiv.innerText = "🔄 พิกัดพร้อม! กำลังส่งข้อมูลไปยัง Google Sheet...";
 
-        fetch(https://script.google.com/macros/s/AKfycbwGGh9w5IGqNBWKunzS1ePRue5AsedbIm1BdVTyvc11wK20gK9sZIMWtv8XbuPcQvpgaA/exec, {
+        // ส่งข้อมูลไปยัง Google Apps Script
+        fetch(WEB_APP_URL, {
           method: "POST",
-          mode: "no-cors", // จำเป็นสำหรับการข้ามโดเมน
+          mode: "no-cors", // สำคัญมากสำหรับการส่งข้ามโดเมน
+          headers: {
+            "Content-Type": "text/plain"
+          },
           body: JSON.stringify(payload)
         })
         .then(() => {
-          document.getElementById('status').innerText = "✅ บันทึกสำเร็จ! (ไปดูใน Sheet)";
+          // เนื่องจากใช้ no-cors เราอาจจะไม่ได้รับ Response กลับมาตรงๆ 
+          // แต่ถ้าไม่มี Error พ่นออกมาใน Console มักจะบันทึกสำเร็จ
+          statusDiv.innerText = "✅ บันทึกสำเร็จ! กรุณาตรวจสอบที่ Google Sheet";
+          statusDiv.className = "success";
+          document.getElementById('testName').value = ""; // ล้างช่องชื่อ
         })
         .catch(err => {
-          document.getElementById('status').innerText = "❌ ผิดพลาด: " + err;
+          statusDiv.innerText = "❌ เกิดข้อผิดพลาด: " + err;
+          statusDiv.className = "error";
+          console.error(err);
         });
 
-      }, (err) => alert("GPS Error: " + err.message));
+      }, (err) => {
+        statusDiv.innerText = "❌ GPS Error: " + err.message + "\n(กรุณากด 'อนุญาต' สิทธิ์พิกัด)";
+        statusDiv.className = "error";
+      }, { enableHighAccuracy: true });
     }
   </script>
 </body>
