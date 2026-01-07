@@ -67,6 +67,19 @@
     <div id="status-text" style="margin-bottom:15px; font-weight:bold; color:orange;">⏳ พร้อมบันทึกข้อมูล</div>
 
     <input type="text" id="userName" placeholder="พิมพ์ ชื่อเล่นของคุณ (ต้องเหมือนกันทุกครั้ง)">
+    
+    <select id="userRegion">
+      <option value="">-- เลือกสังกัดภาค (บังคับ) --</option>
+      <option value="BKK">BKK</option>
+      <option value="CR">CR</option>
+      <option value="ER">ER</option>
+      <option value="NER">NER</option>
+      <option value="NR">NR</option>
+      <option value="SR">SR</option>
+      <option value="TE">TE</option>
+      <option value="DR">DR</option>
+      <option value="OFFICE">OFFICE</option>
+    </select>
 
     <div id="extra-questions">
       <input type="text" id="q_with" placeholder="ทำงานกับใคร (ระบุชื่อเล่น)">
@@ -88,7 +101,7 @@
 
     <div id="report-section">
       <select id="q_region">
-        <option value="">-- เลือก Region (บังคับ) --</option>
+        <option value="">-- เลือก Region งาน (บังคับ) --</option>
         <option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option><option>TE</option><option>DR</option>
       </select>
       <input type="text" id="q_buddy" placeholder="ทำงานคู่กับใคร (ถ้ามี)">
@@ -260,6 +273,7 @@
 
   function processExpense() {
     if(!document.getElementById('userName').value) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    if(!document.getElementById('userRegion').value) { alert("กรุณาเลือกสังกัดภาคครับ"); return; }
     if(expenseStep === 1) {
       if(!document.getElementById('ex_date').value || !document.getElementById('ex_region').value) { alert("กรอกวันที่และภาคให้ครบ"); return; }
       if(document.getElementById('ex_scr_type').value === 'มีตั้งเบิกค่าประชาคม') {
@@ -303,7 +317,7 @@
     d[0] = document.getElementById('ex_date').value;
     d[2] = document.getElementById('userName').value;
     d[7] = "Expenses";
-    d[14] = document.getElementById('ex_region').value;
+    d[14] = document.getElementById('userRegion').value; // สังกัดภาคลง Column O
     d[15] = document.getElementById('ex_type').value;
     d[16] = document.getElementById('ex_type_etc').value;
     d[42] = document.getElementById('ex_site').value;
@@ -321,6 +335,7 @@
     d[54] = document.getElementById('ex_scr_prov').value || ""; 
     d[55] = document.getElementById('ex_scr_val').value || 0;  
     d[56] = document.getElementById('ex_scr_date').value || "";
+    d[57] = document.getElementById('ex_date').value; // EPSDate ลง Column BE (Index 56+1)
 
     var promises = selectedFiles.map(file => {
       return new Promise(resolve => {
@@ -336,10 +351,9 @@
         mode: "no-cors",
         body: JSON.stringify({
           action: "SAVE_EXPENSE_FILES",
-          row: 0, // ใน GitHub Mode จะใช้ appendRow ใน doPost
           values: d,
           files: files,
-          region: document.getElementById('ex_region').value
+          region: document.getElementById('userRegion').value // แยก Folder ตามสังกัดภาค
         })
       }).then(finishDisplay);
     });
@@ -347,7 +361,8 @@
 
   function processReport() {
     var name = document.getElementById('userName').value;
-    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    var region = document.getElementById('userRegion').value;
+    if (!name || !region) { alert("กรุณากรอกชื่อและเลือกสังกัดภาคครับ"); return; }
     if (reportStep === 1) {
       var reportDate = document.getElementById('q_date_rep').value;
       if(!document.getElementById('q_region').value || !reportDate || !document.getElementById('q_type').value) { alert("กรุณากรอกข้อมูลบังคับให้ครบครับ"); return; }
@@ -413,9 +428,8 @@
     d[2] = document.getElementById('userName').value;
     d[7] = "Report";
     d[9] = document.getElementById('q_buddy').value;
-    d[14] = document.getElementById('q_region').value;
+    d[14] = document.getElementById('userRegion').value; // ลง Column O
     d[15] = document.getElementById('q_type').value;
-    d[16] = document.getElementById('q_type_etc').value;
     d[17] = document.getElementById('q_job_detail').value;
     if(d[15] === 'งาน CR') {
       d[17] = document.getElementById('s_region_job').value;
@@ -434,7 +448,9 @@
 
   function getGPS() {
     var name = document.getElementById('userName').value;
-    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    var region = document.getElementById('userRegion').value;
+    if (!name || !region) { alert("กรุณากรอกชื่อและเลือกสังกัดภาคครับ"); return; }
+    
     var q_loc = document.getElementById('q_loc').value;
     var q_plan = document.getElementById('q_plan').value;
     
@@ -460,15 +476,33 @@
       var finalLoc = document.getElementById('q_loc').value;
       if(finalLoc === "โรงแรม") finalLoc = "โรงแรม (" + document.getElementById('q_hotel_prov').value + ")";
       var finalCar = (document.getElementById('q_car').value === "รถตัวเอง") ? document.getElementById('userName').value : (document.getElementById('q_car_name').value || "คนอื่น");
-      var extraData = [ document.getElementById('q_with').value || "-", finalCar, document.getElementById('q_mile').value || "0", finalLoc || "-", document.getElementById('q_plan').value || "-" ];
+      
+      // ข้อมูลพื้นฐาน 15 ช่องแรก
+      var basicData = new Array(15).fill("");
+      basicData[0] = new Date().toLocaleDateString('th-TH'); // วันที่วันนี้
+      basicData[2] = window.tempData[0]; // ชื่อเล่น
+      basicData[3] = window.tempData[1]; // Lat
+      basicData[4] = window.tempData[2]; // Lng
+      basicData[7] = window.tempData[3]; // Status
+      basicData[14] = document.getElementById('userRegion').value; // Region ลง Column O
+
+      var extraData = [ 
+        document.getElementById('q_with').value || "-", 
+        finalCar, 
+        document.getElementById('q_mile').value || "0", 
+        finalLoc || "-", 
+        document.getElementById('q_plan').value || "-" 
+      ];
       
       fetch(WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
         body: JSON.stringify({
           action: "GET_LOC",
-          values: [...window.tempData, ...extraData],
-          image: e.target.result
+          values: basicData, // ส่งอาเรย์ 15 ช่องเพื่อให้ชื่อภาคลง Column O
+          extra: extraData,
+          image: e.target.result,
+          region: document.getElementById('userRegion').value // เพื่อแยกโฟลเดอร์รูป
         })
       }).then(finishDisplay);
     };
@@ -479,6 +513,7 @@
     document.getElementById('finish-msg').style.display = "block";
     document.getElementById('btn-action').style.display = "none";
     document.getElementById('userName').style.display = "none";
+    document.getElementById('userRegion').style.display = "none";
     document.getElementById('extra-questions').style.display = "none";
     document.getElementById('report-section').style.display = "none";
     document.getElementById('site-section').style.display = "none";
