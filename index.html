@@ -246,3 +246,11 @@
   }
 
   function finishDisplay() {
+    document.getElementById('page-record').querySelectorAll('.card > *:not(#finish-msg)').forEach(el => el.style.display='none');
+    document.getElementById('finish-msg').style.display = "block";
+    document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ";
+    document.getElementById('finish-text-2').innerText = "Safety First and Have a nice day";
+  }
+</script>
+</body>
+</html>
