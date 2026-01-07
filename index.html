@@ -180,10 +180,9 @@
   </div>
 
   <input type="file" id="fileInput" accept="image/*" capture="camera" style="display:none" onchange="uploadPhoto(this)">
-  <script>
-  // URL Web App จาก Google Apps Script
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwk-spmOFdk-ZLRHhTkJXUshNWmJ6DqvdbNqUByszqLMDVujm7XFe0by-VDVUmNgZmuoQ/exec";
 
+<script>
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwk-spmOFdk-ZLRHhTkJXUshNWmJ6DqvdbNqUByszqLMDVujm7XFe0by-VDVUmNgZmuoQ/exec";
   var selectedStatus = "";
   var currentRow = 0;
   var reportStep = 1; 
@@ -290,4 +289,213 @@
     if(hotel > 0) html += "🏨 ค่าที่พัก: " + hotel + " บาท<br>";
     if(ccr > 0) html += "🍪 ค่าของประชาคม: " + ccr + " บาท<br>";
     if(trav > 0) html += "🚗 ค่าเดินทาง: " + trav + " บาท<br>";
-    if(spc > 0) html += "✨
+    if(spc > 0) html += "✨ ค่าใช้จ่ายพิเศษ: " + spc + " บาท<br>";
+    if(nb > 0) html += "📝 ไม่มีบิล: " + nb + " บาท (" + document.getElementById('ex_nb_name').value + ")<br>";
+    if(scr > 0) html += "📢 ค่าประชาคม: " + scr + " บาท (ไซต์ " + document.getElementById('ex_scr_site').value + ")<br>";
+    document.getElementById('sum-details').innerHTML = html || "ไม่มีรายการเบิกเงิน";
+    document.getElementById('sum-total').innerText = "ยอดรวมทั้งสิ้น: " + total.toLocaleString() + " บาท";
+  }
+
+  function confirmExpenseFinal() {
+    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูลและอัปโหลดรูป...";
+    document.getElementById('expense-summary').style.display = 'none';
+    var d = new Array(57).fill("");
+    d[0] = document.getElementById('ex_date').value;
+    d[2] = document.getElementById('userName').value;
+    d[7] = "Expenses";
+    d[14] = document.getElementById('ex_region').value;
+    d[15] = document.getElementById('ex_type').value;
+    d[16] = document.getElementById('ex_type_etc').value;
+    d[42] = document.getElementById('ex_site').value;
+    d[43] = document.getElementById('ex_prov').value;
+    d[44] = document.getElementById('ex_oil').value || 0;
+    d[45] = document.getElementById('ex_hotel').value || 0;
+    d[46] = document.getElementById('ex_ccr').value || 0;
+    d[47] = document.getElementById('ex_trav').value || 0;
+    d[48] = document.getElementById('ex_spc_type').value;
+    d[49] = document.getElementById('ex_spc_val').value || 0;
+    d[50] = document.getElementById('ex_nb_name').value || "ไม่มี";
+    d[51] = document.getElementById('ex_nb_val').value || 0;
+    d[52] = document.getElementById('ex_scr_type').value;
+    d[53] = document.getElementById('ex_scr_site').value || ""; 
+    d[54] = document.getElementById('ex_scr_prov').value || ""; 
+    d[55] = document.getElementById('ex_scr_val').value || 0;  
+    d[56] = document.getElementById('ex_scr_date').value || "";
+
+    var promises = selectedFiles.map(file => {
+      return new Promise(resolve => {
+        var reader = new FileReader();
+        reader.onload = e => resolve({name: file.name, data: e.target.result});
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises).then(files => {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "SAVE_EXPENSE_FILES",
+          row: 0, // ใน GitHub Mode จะใช้ appendRow ใน doPost
+          values: d,
+          files: files,
+          region: document.getElementById('ex_region').value
+        })
+      }).then(finishDisplay);
+    });
+  }
+
+  function processReport() {
+    var name = document.getElementById('userName').value;
+    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    if (reportStep === 1) {
+      var reportDate = document.getElementById('q_date_rep').value;
+      if(!document.getElementById('q_region').value || !reportDate || !document.getElementById('q_type').value) { alert("กรุณากรอกข้อมูลบังคับให้ครบครับ"); return; }
+      if (new Date(reportDate).getFullYear() !== 2026) { alert("กรุณาเลือกวันที่ในปี 2026 เท่านั้นครับ"); return; }
+      if(document.getElementById('q_type').value === 'งาน CR') {
+        reportStep = 2; siteIdx = 1; document.getElementById('site-container').innerHTML = ''; renderSite(1);
+      } else {
+        if(!document.getElementById('q_job_detail').value) { alert("กรุณาระบุรายละเอียดงานครับ"); return; }
+        sendReportFinal();
+      }
+    } else {
+      if(!validateSite(siteIdx)) return;
+      var nextEl = document.getElementById("next_s_" + siteIdx);
+      if(siteIdx < 4 && nextEl && nextEl.value.includes("มีไซต์ที่")) {
+        siteIdx++; renderSite(siteIdx);
+      } else { sendReportFinal(); }
+    }
+  }
+
+  function renderSite(n) {
+    document.getElementById('report-section').style.display = 'none';
+    document.getElementById('site-section').style.display = 'block';
+    document.getElementById('btn-action').innerText = (n === 4) ? "ส่งรายงาน" : "ถัดไป / ส่งรายงาน";
+    for(var j=1; j<n; j++){ if(document.getElementById('site_wrapper_' + j)) document.getElementById('site_wrapper_' + j).style.display = 'none'; }
+    var container = document.getElementById('site-container');
+    var div = document.createElement('div');
+    div.id = 'site_wrapper_' + n;
+    div.innerHTML = `<div class="section-title">ข้อมูลไซต์ที่ ${n}</div>
+      ${n === 1 ? `<select id="s_region_job"><option value="">-- ทำงานของภาค --</option><option>BKK</option><option>CR</option><option>ER</option><option>NER</option><option>NR</option><option>SR</option></select>` : ''}
+      <input type="text" id="s_name_${n}" placeholder="ชื่อไซต์">
+      <input type="text" id="s_prov_${n}" placeholder="จังหวัด">
+      <select id="s_job_${n}" onchange="document.getElementById('s_etc_${n}').style.display = (this.value === 'อื่น ๆ' ? 'block' : 'none')">
+        <option value="">-- เนื้องาน --</option>
+        <option>ไม่ได้ลงพื้นที่ โทรติดต่อนัดประชาคม</option>
+        <option>ลงพื้นที่ทำ CR - CRL</option>
+        <option>ลงพื้นที่ทำ CR + นัดประชาคม</option>
+        <option>ลงพื้นที่ ทำประชาคม</option>
+        <option>ลงพื้นที่ทำ CR + ทำประชาคม</option>
+        <option>ลงพื้นที่ เพื่อทำงานหาที่ SA</option>
+        <option>ลงพื้นที่ เคลียร์ประเด็น (ขออนุมัติแล้ว)</option>
+        <option>อื่น ๆ</option>
+      </select>
+      <input type="text" id="s_etc_${n}" placeholder="ระบุชนิดงาน (บังคับ)" style="display:none;">
+      <textarea id="s_det_${n}" placeholder="ระบุรายละเอียดงาน"></textarea>
+      <input type="text" id="s_ld_${n}" placeholder="ชื่อผู้นำ-และเบอร์โทร">
+      ${n < 4 ? `<select id="next_s_${n}"><option value="ไม่มี">ไม่มี (ส่งรายงาน)</option><option value="มีไซต์ที่ ${n+1}">มีไซต์ที่ ${n+1}</option></select>` : ''}`;
+    container.appendChild(div);
+  }
+
+  function validateSite(n) {
+    var job = document.getElementById(`s_job_${n}`).value;
+    var etc = document.getElementById(`s_etc_${n}`).value;
+    if(!document.getElementById(`s_name_${n}`).value || !document.getElementById(`s_prov_${n}`).value || !job || !document.getElementById(`s_det_${n}`).value || !document.getElementById(`s_ld_${n}`).value) { alert("กรุณากรอกข้อมูลไซต์ให้ครบถ้วน"); return false; }
+    if(job === 'อื่น ๆ' && !etc) { alert("กรุณาระบุชนิดงานด้วยครับ"); return false; }
+    return true;
+  }
+
+  function sendReportFinal() {
+    document.getElementById('btn-action').disabled = true;
+    document.getElementById('status-text').innerText = "🔄 กำลังส่งรายงาน...";
+    var d = new Array(42).fill("");
+    d[0] = document.getElementById('q_date_rep').value;
+    d[2] = document.getElementById('userName').value;
+    d[7] = "Report";
+    d[9] = document.getElementById('q_buddy').value;
+    d[14] = document.getElementById('q_region').value;
+    d[15] = document.getElementById('q_type').value;
+    d[16] = document.getElementById('q_type_etc').value;
+    d[17] = document.getElementById('q_job_detail').value;
+    if(d[15] === 'งาน CR') {
+      d[17] = document.getElementById('s_region_job').value;
+      for(var i=1; i <= siteIdx; i++) {
+        var base = 18 + ((i-1)*6);
+        d[base] = document.getElementById('s_name_' + i).value; 
+        d[base+1] = document.getElementById('s_prov_' + i).value; 
+        d[base+2] = document.getElementById('s_job_' + i).value;
+        d[base+3] = document.getElementById('s_etc_' + i).value || ""; 
+        d[base+4] = document.getElementById('s_det_' + i).value; 
+        d[base+5] = document.getElementById('s_ld_' + i).value;
+      }
+    }
+    fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "SAVE_REPORT", values: d })}).then(finishDisplay);
+  }
+
+  function getGPS() {
+    var name = document.getElementById('userName').value;
+    if (!name) { alert("กรุณากรอกชื่อเล่นครับ"); return; }
+    var q_loc = document.getElementById('q_loc').value;
+    var q_plan = document.getElementById('q_plan').value;
+    
+    if(selectedStatus === 'Check In' || selectedStatus === 'Check Out') {
+       if(!q_loc) { alert("กรุณาเลือกสถานที่ " + (selectedStatus === 'Check In' ? "เช็คอิน" : "เช็คเอ้า") + " ครับ"); return; }
+       if(!q_plan) { alert("กรุณากรอก " + (selectedStatus === 'Check In' ? "PLAN" : "BRIFE") + " ครับ"); return; }
+    }
+
+    document.getElementById('status-text').innerText = "⏳ กำลังค้นหาพิกัด...";
+    document.getElementById('btn-action').disabled = true;
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      window.tempData = [name, pos.coords.latitude, pos.coords.longitude, selectedStatus, "Mobile"];
+      document.getElementById('status-text').innerText = "📍 พบพิกัดแล้ว! กรุณาถ่ายรูป";
+      document.getElementById('fileInput').click();
+    }, function(err) { alert("Error GPS: " + err.message); document.getElementById('btn-action').disabled = false; }, {enableHighAccuracy: true});
+  }
+
+  function uploadPhoto(input) {
+    if (!input || !input.files[0]) return;
+    document.getElementById('status-text').innerText = "🔄 กำลังบันทึกข้อมูล...";
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var finalLoc = document.getElementById('q_loc').value;
+      if(finalLoc === "โรงแรม") finalLoc = "โรงแรม (" + document.getElementById('q_hotel_prov').value + ")";
+      var finalCar = (document.getElementById('q_car').value === "รถตัวเอง") ? document.getElementById('userName').value : (document.getElementById('q_car_name').value || "คนอื่น");
+      var extraData = [ document.getElementById('q_with').value || "-", finalCar, document.getElementById('q_mile').value || "0", finalLoc || "-", document.getElementById('q_plan').value || "-" ];
+      
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "GET_LOC",
+          values: [...window.tempData, ...extraData],
+          image: e.target.result
+        })
+      }).then(finishDisplay);
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function finishDisplay() {
+    document.getElementById('finish-msg').style.display = "block";
+    document.getElementById('btn-action').style.display = "none";
+    document.getElementById('userName').style.display = "none";
+    document.getElementById('extra-questions').style.display = "none";
+    document.getElementById('report-section').style.display = "none";
+    document.getElementById('site-section').style.display = "none";
+    document.getElementById('expense-section').style.display = "none";
+    document.getElementById('expense-upload').style.display = "none";
+    document.getElementById('expense-summary').style.display = "none";
+    document.getElementById('display-status').style.display = "none";
+    document.getElementById('status-text').style.display = "none";
+    
+    if (selectedStatus === 'Check Out' || selectedStatus === 'Report' || selectedStatus === 'Expenses') {
+      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ แบ่งเวลาในการพักผ่อนให้เพียงพอ อย่าลืมส่งรายงาน และตั้งเบิกค่าใช้จ่ายด้วยนะ";
+      document.getElementById('finish-text-2').innerText = "Take care and Sleep well.";
+    } else {
+      document.getElementById('finish-text-1').innerText = "ขอบคุณที่ให้ความร่วมมือ ขอให้ทำงานด้วยความสนุกสนาน คิดถึงผลลัพธ์เป็นหลัก เคารพและให้เกียรติทุกคนที่ต้องติดต่อและร่วมงาน";
+      document.getElementById('finish-text-2').innerText = "Safety First and Have a nice day";
+    }
+  }
+</script>
+</body>
+</html>
